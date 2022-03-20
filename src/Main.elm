@@ -63,6 +63,7 @@ type Msg
     | UpdateReps String
     | Calculate
     | ChangeUnit Unit
+    | Reset
     | NoOp
 
 
@@ -83,6 +84,9 @@ update msg model =
 
         ChangeUnit unit ->
             ( changeUnit unit model, Cmd.none )
+
+        Reset ->
+            ( reset model, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -126,6 +130,15 @@ changeUnit unit model =
     { model | unit = unit }
 
 
+reset : Model -> Model
+reset model =
+    { model
+        | weight = 0
+        , reps = 0
+        , oneRepMax = 0
+    }
+
+
 inputStringToNumber : String -> Int -> Int
 inputStringToNumber numberString default =
     if String.isEmpty numberString then
@@ -160,17 +173,18 @@ viewPhone model =
     layout
         [ width fill
         , height fill
-        , Background.color grey
+        , padding <| padSm model
         ]
     <|
         column
             [ width fill
-            , padding <| padLg model
+            , padding <| padMd model
+            , Background.color grey
+            , Border.rounded 10
             ]
             [ title model
-            , weightInput model
+            , numberInputs model
             , unitRadio model
-            , repsInput model
             , calculateButton model
             , result model
             ]
@@ -185,7 +199,28 @@ title model =
             , Font.family fontPrimary
             ]
           <|
-            text "1 Rep Maximum"
+            text "1 RM Calculator"
+        ]
+
+
+numberInputs : Model -> Element Msg
+numberInputs model =
+    let
+        multiply =
+            el
+                [ Font.size <| fontLg model
+                , Font.family fontPrimary
+                ]
+            <|
+                text "x"
+    in
+    row
+        [ paddingEach { edges | top = padMd model }
+        , spacing <| padXxs model
+        ]
+        [ weightInput model
+        , multiply
+        , repsInput model
         ]
 
 
@@ -199,15 +234,33 @@ weightInput model =
             else
                 String.fromInt model.weight
     in
-    row
-        [ width fill
-        , paddingEach { edges | top = padLg model }
-        ]
+    row [ width fill ]
         [ Input.text
-            (numberInputStyle model)
+            numberInputStyle
             { onChange = UpdateWeight
             , text = numberString
             , placeholder = textInputPlaceholder "Weight"
+            , label = Input.labelHidden "Weight"
+            }
+        ]
+
+
+repsInput : Model -> Element Msg
+repsInput model =
+    let
+        numberString =
+            if model.reps == 0 then
+                ""
+
+            else
+                String.fromInt model.reps
+    in
+    row [ width fill ]
+        [ Input.text
+            numberInputStyle
+            { onChange = UpdateReps
+            , text = numberString
+            , placeholder = textInputPlaceholder "Reps"
             , label = Input.labelHidden "Weight"
             }
         ]
@@ -253,6 +306,7 @@ radioOption label model state =
             el
                 [ width <| px 20
                 , height <| px 20
+                , Background.color grey
                 , Border.rounded 10
                 , Border.width 1
                 , Border.color black
@@ -284,37 +338,13 @@ radioOption label model state =
         ]
 
 
-repsInput : Model -> Element Msg
-repsInput model =
-    let
-        numberString =
-            if model.reps == 0 then
-                ""
-
-            else
-                String.fromInt model.reps
-    in
-    row
-        [ width fill
-        , paddingEach { edges | top = padMd model }
-        ]
-        [ Input.text
-            (numberInputStyle model)
-            { onChange = UpdateReps
-            , text = numberString
-            , placeholder = textInputPlaceholder "Reps"
-            , label = Input.labelHidden "Weight"
-            }
-        ]
-
-
-numberInputStyle : Model -> List (Attribute Msg)
-numberInputStyle model =
+numberInputStyle : List (Attribute Msg)
+numberInputStyle =
     let
         borderShadow =
             { offset = ( 0, 3 )
             , size = 0
-            , blur = 0
+            , blur = 3
             , color = grey
             }
     in
@@ -341,25 +371,25 @@ calculateButton model =
         borderShadow =
             { offset = ( 0, 4 )
             , size = 0
-            , blur = 0
-            , color = black
+            , blur = 4
+            , color = blackTranslucent
             }
 
         pads =
-            { top = padSm model
-            , bottom = padSm model
-            , left = padXl model
-            , right = padXl model
+            { edges
+                | top = padSm model
+                , bottom = padSm model
             }
 
         label =
             el
-                [ Font.color white
+                [ centerX
+                , Font.color white
                 , Font.size <| fontXl model
                 , Font.family fontPrimary
                 ]
             <|
-                text "Calculate"
+                text "Calculate 1 RM"
     in
     row
         [ width fill
@@ -367,6 +397,7 @@ calculateButton model =
         ]
         [ Input.button
             [ centerX
+            , width fill
             , paddingEach pads
             , Background.color blue
             , Border.rounded 5
@@ -397,7 +428,7 @@ result model =
                 , Font.family fontSecondary
                 ]
             <|
-                text "Your Estimated 1 Rep Maximum"
+                text "Your Estimated 1 Rep Max"
 
         oneRepMax =
             el
@@ -410,6 +441,15 @@ result model =
                     String.fromInt model.oneRepMax
                         ++ unit
                 )
+
+        resetButton =
+            Input.button
+                [ centerX
+                , focused []
+                ]
+                { onPress = Just Reset
+                , label = text "Reset"
+                }
     in
     if model.oneRepMax == 0 then
         none
@@ -426,12 +466,22 @@ result model =
                 , paddingEach { edges | top = padXs model }
                 ]
                 [ oneRepMax ]
+            , row
+                [ width fill
+                , paddingEach { edges | top = padLg model }
+                ]
+                [ resetButton ]
             ]
 
 
 black : Color
 black =
     rgb255 0 0 0
+
+
+blackTranslucent : Color
+blackTranslucent =
+    rgba255 0 0 0 0.1
 
 
 blue : Color
