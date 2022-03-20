@@ -586,7 +586,8 @@ scaleFont =
 
 scaleFromWidth : Float -> Model -> Int
 scaleFromWidth factor model =
-    scale factor model.screenSize.width
+    scale factor <|
+        min model.screenSize.width 500
 
 
 scale : Float -> Int -> Int
