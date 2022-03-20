@@ -9,6 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
+import Html.Attributes
 
 
 
@@ -170,6 +171,14 @@ view model =
 
 viewPhone : Model -> Html Msg
 viewPhone model =
+    let
+        borderShadow =
+            { offset = ( 0, 6 )
+            , size = 0
+            , blur = 6
+            , color = blackTranslucent
+            }
+    in
     layout
         [ width fill
         , height fill
@@ -181,6 +190,7 @@ viewPhone model =
             , padding <| padMd model
             , Background.color grey
             , Border.rounded 10
+            , Border.shadow borderShadow
             ]
             [ title model
             , numberInputs model
@@ -196,6 +206,7 @@ title model =
         [ el
             [ centerX
             , Font.size <| fontXxl model
+            , Font.letterSpacing 0.3
             , Font.family fontPrimary
             ]
           <|
@@ -264,6 +275,35 @@ repsInput model =
             , label = Input.labelHidden "Weight"
             }
         ]
+
+
+numberInputStyle : List (Attribute Msg)
+numberInputStyle =
+    let
+        borderShadow =
+            { offset = ( 0, 3 )
+            , size = 0
+            , blur = 3
+            , color = grey
+            }
+    in
+    [ Border.width 2
+    , Border.rounded 5
+    , Border.color darkGrey
+    , Border.innerShadow borderShadow
+    , Font.alignLeft
+    , Font.family fontSecondary
+    , Element.htmlAttribute <|
+        Html.Attributes.type_ "number"
+    , focused []
+    ]
+
+
+textInputPlaceholder : String -> Maybe (Input.Placeholder Msg)
+textInputPlaceholder placeholder =
+    Just <|
+        Input.placeholder [ alignLeft ] <|
+            text placeholder
 
 
 unitRadio : Model -> Element Msg
@@ -338,33 +378,6 @@ radioOption label model state =
         ]
 
 
-numberInputStyle : List (Attribute Msg)
-numberInputStyle =
-    let
-        borderShadow =
-            { offset = ( 0, 3 )
-            , size = 0
-            , blur = 3
-            , color = grey
-            }
-    in
-    [ Border.width 2
-    , Border.rounded 5
-    , Border.color darkGrey
-    , Border.innerShadow borderShadow
-    , Font.alignLeft
-    , Font.family fontSecondary
-    , focused []
-    ]
-
-
-textInputPlaceholder : String -> Maybe (Input.Placeholder Msg)
-textInputPlaceholder placeholder =
-    Just <|
-        Input.placeholder [ alignLeft ] <|
-            text placeholder
-
-
 calculateButton : Model -> Element Msg
 calculateButton model =
     let
@@ -386,6 +399,7 @@ calculateButton model =
                 [ centerX
                 , Font.color white
                 , Font.size <| fontXl model
+                , Font.letterSpacing 0.3
                 , Font.family fontPrimary
                 ]
             <|
@@ -481,7 +495,7 @@ black =
 
 blackTranslucent : Color
 blackTranslucent =
-    rgba255 0 0 0 0.1
+    rgba255 0 0 0 0.15
 
 
 blue : Color
