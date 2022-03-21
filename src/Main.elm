@@ -1,16 +1,18 @@
 module Main exposing (..)
 
 import Browser
-import Browser.Dom exposing (focus)
 import Browser.Events
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events
+import Icons
+import Json.Decode as Decode
+import Svg.Attributes
 
 
 
@@ -183,14 +185,6 @@ view model =
 
 viewPhone : Model -> Html Msg
 viewPhone model =
-    let
-        borderShadow =
-            { offset = ( 0, 6 )
-            , size = 0
-            , blur = 6
-            , color = blackTranslucent
-            }
-    in
     layout
         [ width fill
         , height fill
@@ -199,21 +193,32 @@ viewPhone model =
     <|
         column
             [ width fill
-            , padding <| padMd model
-            , Background.color grey
-            , Border.rounded 10
-            , Border.shadow borderShadow
+            , spacing <| padMd model
             ]
-            [ title model
-            , numberInputs model
-            , unitRadio model
-            , calculateButton model
-            , result model
+            [ calculatorPanel model
+            , infoPanel model
             ]
 
 
-title : Model -> Element Msg
-title model =
+calculatorPanel : Model -> Element Msg
+calculatorPanel model =
+    column
+        [ width fill
+        , padding <| padMd model
+        , Background.color grey
+        , Border.rounded 10
+        , Border.shadow panelShadow
+        ]
+        [ calculatorTitle model
+        , numberInputs model
+        , unitRadio model
+        , calculateButton model
+        , result model
+        ]
+
+
+calculatorTitle : Model -> Element Msg
+calculatorTitle model =
     row [ width fill ]
         [ el
             [ centerX
@@ -224,6 +229,71 @@ title model =
           <|
             text "1 RM Calculator"
         ]
+
+
+infoPanel : Model -> Element Msg
+infoPanel model =
+    column
+        [ width fill
+        , padding <| padMd model
+        , Background.color grey
+        , Border.rounded 10
+        , Border.shadow panelShadow
+        ]
+        [ infoTitle model
+        , infoContent model
+        ]
+
+
+infoTitle : Model -> Element Msg
+infoTitle model =
+    row [ width fill ]
+        [ el
+            [ centerX
+            , Font.size <| fontLg model
+            , Font.letterSpacing 0.3
+            , Font.family fontPrimary
+            ]
+          <|
+            text "About 1 RM Calculator"
+        ]
+
+
+infoContent : Model -> Element Msg
+infoContent model =
+    let
+        paragraphWithStyle : String -> Element Msg
+        paragraphWithStyle content =
+            paragraph
+                [ spacing <| padXxs model
+                , Font.size <| fontSm model
+                , Font.family fontSecondary
+                , Font.alignLeft
+                ]
+                [ text content ]
+    in
+    column
+        [ width fill
+        , paddingEach { edges | top = padMd model }
+        , spacing <| padMd model
+        ]
+        [ paragraphWithStyle
+            "One repetition maximum (one rep max or 1RM) in weight training is the maximum amount of weight that a person can possibly lift for one repetition. It may also be considered as the maximum amount of force that can be generated in one maximal contraction.  One repetition maximum can be used for determining an individuals maximum strength and is the method for determining the winner in events such as powerlifting and weightlifting competitions. One repetition maximum can also be used as an upper limit, in order to determine the desired load for an exercise (as a percentage of the 1RM)."
+        , paragraphWithStyle
+            "The 1RM can either be calculated directly using maximal testing or indirectly using submaximal estimation. The submaximal estimation method is preferred as it is safer, quicker, and less unnerving for inexperienced exercisers, however, it may underestimate the actual 1RM. One rep maximum calculators are used to predict a one rep maximum lift. The degree of accuracy can vary largely depending on the weight training experience and muscular composition of the athlete. Also, most one rep maximum calculators are designed for seasoned strength trainers, and those with little experience may find their actual one rep maximum is much lower because their nervous system cannot handle the stress of a high weight. This test should be performed with a spotter for reasons of safety."
+        , paragraphWithStyle
+            "Weight training protocols often use 1RM when programming to ensure the exerciser reaches resistance overload, especially when the exercise objective is muscular strength, endurance or hypertrophy. By understanding the maximal potential of the muscle, it is possible to reach resistance overload by increasing the number of repetitions for an exercise."
+        , paragraphWithStyle
+            "Determining the 1 rep max can be done directly through trial and error and simply requires the exerciser to complete one full repetition with the maximum weight. There are several common formulas used to estimate 1RM using the submaximal method, the Epley and the Brzycki being the most common. This app uses the Epley method."
+        ]
+
+
+panelShadow =
+    { offset = ( 0, 6 )
+    , size = 0
+    , blur = 6
+    , color = blackTranslucent
+    }
 
 
 numberInputs : Model -> Element Msg
@@ -439,6 +509,24 @@ calculateButton model =
         ]
 
 
+onEnter : msg -> Attribute msg
+onEnter msg =
+    let
+        enterPressed =
+            Decode.field "key" Decode.string
+                |> Decode.andThen
+                    (\key ->
+                        if key == "Enter" then
+                            Decode.succeed msg
+
+                        else
+                            Decode.fail "Not the enter key"
+                    )
+    in
+    htmlAttribute <|
+        Html.Events.on "keyup" enterPressed
+
+
 result : Model -> Element Msg
 result model =
     let
@@ -474,6 +562,23 @@ result model =
                         ++ unit
                 )
 
+        label : Element Msg
+        label =
+            el
+                [ width fill
+                , height fill
+                , centerX
+                ]
+            <|
+                html <|
+                    Icons.reset
+                        [ Svg.Attributes.fill <|
+                            toSvgColor blue
+                        , Svg.Attributes.height <|
+                            String.fromInt <|
+                                scaleFromWidth 0.136 model
+                        ]
+
         resetButton : Element Msg
         resetButton =
             Input.button
@@ -481,7 +586,7 @@ result model =
                 , focused []
                 ]
                 { onPress = Just Reset
-                , label = text "Reset"
+                , label = label
                 }
     in
     if model.oneRepMax == 0 then
@@ -505,6 +610,26 @@ result model =
                 ]
                 [ resetButton ]
             ]
+
+
+toSvgColor : Color -> String
+toSvgColor color =
+    let
+        to255 accessor =
+            toRgb color
+                |> accessor
+                |> (*) 255
+                |> String.fromFloat
+    in
+    String.concat
+        [ "rgb("
+        , to255 .red
+        , ","
+        , to255 .green
+        , ","
+        , to255 .blue
+        , ")"
+        ]
 
 
 black : Color
