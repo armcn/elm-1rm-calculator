@@ -189,10 +189,14 @@ viewPhone model =
         [ width fill
         , height fill
         , padding <| padSm model
+        , htmlAttribute <|
+            Html.Attributes.style "overflow" "scroll"
+        , onEnter Calculate
         ]
     <|
         column
-            [ width fill
+            [ centerX
+            , width <| maximum maxWidth fill
             , spacing <| padMd model
             ]
             [ calculatorPanel model
@@ -271,6 +275,17 @@ infoContent model =
                 , Font.alignLeft
                 ]
                 [ text content ]
+
+        moreInfoLink : Element Msg
+        moreInfoLink =
+            link
+                [ Font.size <| fontMd model
+                , Font.color blue
+                , Font.family fontSecondary
+                ]
+                { url = "https://en.wikipedia.org/wiki/One-repetition_maximum"
+                , label = text "More info about 1RM"
+                }
     in
     column
         [ width fill
@@ -285,6 +300,7 @@ infoContent model =
             "Weight training protocols often use 1RM when programming to ensure the exerciser reaches resistance overload, especially when the exercise objective is muscular strength, endurance or hypertrophy. By understanding the maximal potential of the muscle, it is possible to reach resistance overload by increasing the number of repetitions for an exercise."
         , paragraphWithStyle
             "Determining the 1 rep max can be done directly through trial and error and simply requires the exerciser to complete one full repetition with the maximum weight. There are several common formulas used to estimate 1RM using the submaximal method, the Epley and the Brzycki being the most common. This app uses the Epley method."
+        , moreInfoLink
         ]
 
 
@@ -509,7 +525,7 @@ calculateButton model =
         ]
 
 
-onEnter : msg -> Attribute msg
+onEnter : Msg -> Attribute Msg
 onEnter msg =
     let
         enterPressed =
@@ -745,7 +761,12 @@ scaleFont =
 scaleFromWidth : Float -> Model -> Int
 scaleFromWidth factor model =
     scale factor <|
-        min model.screenSize.width 500
+        min model.screenSize.width maxWidth
+
+
+maxWidth : Int
+maxWidth =
+    450
 
 
 scale : Float -> Int -> Int
