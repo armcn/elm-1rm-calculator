@@ -32,7 +32,7 @@ type Unit
 
 type alias Model =
     { screenSize : ScreenSize
-    , weight : Int
+    , weight : Float
     , reps : Int
     , oneRepMax : Int
     , unit : Unit
@@ -99,9 +99,9 @@ update msg model =
 updateWeight : String -> Model -> Model
 updateWeight numberString model =
     let
-        newWeight : Int
+        newWeight : Float
         newWeight =
-            inputStringToNumber numberString model.weight
+            inputStringToFloat numberString model.weight
     in
     if newWeight < 0 then
         model
@@ -115,7 +115,7 @@ updateReps numberString model =
     let
         newReps : Int
         newReps =
-            inputStringToNumber numberString model.reps
+            inputStringToInt numberString model.reps
     in
     if newReps < 0 then
         model
@@ -124,17 +124,39 @@ updateReps numberString model =
         { model | reps = newReps }
 
 
+inputStringToInt : String -> Int -> Int
+inputStringToInt numberString default =
+    if String.isEmpty numberString then
+        0
+
+    else
+        numberString
+            |> String.toInt
+            |> Maybe.withDefault default
+
+
+inputStringToFloat : String -> Float -> Float
+inputStringToFloat numberString default =
+    if String.isEmpty numberString then
+        0
+
+    else
+        numberString
+            |> String.toFloat
+            |> Maybe.withDefault default
+
+
 calculate : Model -> Model
 calculate model =
     let
         oneRepMax : Int
         oneRepMax =
             if model.reps == 1 then
-                model.weight
+                round model.weight
 
             else
                 round <|
-                    toFloat model.weight
+                    model.weight
                         * (1 + toFloat model.reps / 30)
     in
     { model | oneRepMax = oneRepMax }
@@ -152,17 +174,6 @@ reset model =
         , reps = 0
         , oneRepMax = 0
     }
-
-
-inputStringToNumber : String -> Int -> Int
-inputStringToNumber numberString default =
-    if String.isEmpty numberString then
-        0
-
-    else
-        numberString
-            |> String.toInt
-            |> Maybe.withDefault default
 
 
 
@@ -249,6 +260,20 @@ infoPanel model =
         ]
 
 
+panelShadow :
+    { offset : ( number, number )
+    , size : number
+    , blur : number
+    , color : Color
+    }
+panelShadow =
+    { offset = ( 0, 4 )
+    , size = 0
+    , blur = 6
+    , color = blackTranslucent
+    }
+
+
 infoTitle : Model -> Element Msg
 infoTitle model =
     row [ width fill ]
@@ -304,20 +329,6 @@ infoContent model =
         ]
 
 
-panelShadow :
-    { offset : ( number, number )
-    , size : number
-    , blur : number
-    , color : Color
-    }
-panelShadow =
-    { offset = ( 0, 6 )
-    , size = 0
-    , blur = 6
-    , color = blackTranslucent
-    }
-
-
 numberInputs : Model -> Element Msg
 numberInputs model =
     let
@@ -351,14 +362,14 @@ weightInput model =
                 ""
 
             else
-                String.fromInt model.weight
+                String.fromFloat model.weight
     in
     row [ width fill ]
         [ Input.text
-            numberInputStyle
+            (numberInputStyle model)
             { onChange = UpdateWeight
             , text = numberString
-            , placeholder = textInputPlaceholder "Weight"
+            , placeholder = textInputPlaceholder "Weight" model
             , label = Input.labelHidden "Weight"
             }
         ]
@@ -377,31 +388,32 @@ repsInput model =
     in
     row [ width fill ]
         [ Input.text
-            numberInputStyle
+            (numberInputStyle model)
             { onChange = UpdateReps
             , text = numberString
-            , placeholder = textInputPlaceholder "Reps"
+            , placeholder = textInputPlaceholder "Reps" model
             , label = Input.labelHidden "Weight"
             }
         ]
 
 
-numberInputStyle : List (Attribute Msg)
-numberInputStyle =
+numberInputStyle : Model -> List (Attribute Msg)
+numberInputStyle model =
     let
         borderShadow =
-            { offset = ( 0, 3 )
+            { offset = ( 0, 2 )
             , size = 0
-            , blur = 3
-            , color = grey
+            , blur = 4
+            , color = blackTranslucent
             }
     in
     [ width fill
-    , Border.width 2
+    , Border.width 1
     , Border.rounded 5
     , Border.color darkGrey
     , Border.innerShadow borderShadow
     , Font.alignLeft
+    , Font.size <| fontLg model
     , Font.family fontSecondary
     , Element.htmlAttribute <|
         Html.Attributes.type_ "number"
@@ -409,10 +421,16 @@ numberInputStyle =
     ]
 
 
-textInputPlaceholder : String -> Maybe (Input.Placeholder Msg)
-textInputPlaceholder placeholder =
+textInputPlaceholder : String -> Model -> Maybe (Input.Placeholder Msg)
+textInputPlaceholder placeholder model =
     Just <|
-        Input.placeholder [ alignLeft ] <|
+        Input.placeholder
+            [ alignLeft
+            , Font.size <| fontLg model
+            , Font.color darkGrey
+            , Font.family fontSecondary
+            ]
+        <|
             text placeholder
 
 
@@ -488,7 +506,7 @@ calculateButton : Model -> Element Msg
 calculateButton model =
     let
         borderShadow =
-            { offset = ( 0, 4 )
+            { offset = ( 0, 2 )
             , size = 0
             , blur = 4
             , color = blackTranslucent
@@ -598,7 +616,7 @@ result model =
                             toSvgColor blue
                         , Svg.Attributes.height <|
                             String.fromInt <|
-                                scaleFromWidth 0.136 model
+                                scaleFromWidth 0.1 model
                         ]
 
         resetButton : Element Msg
@@ -656,7 +674,7 @@ toSvgColor color =
 
 black : Color
 black =
-    rgb255 0 0 0
+    rgb255 26 26 26
 
 
 blackTranslucent : Color
@@ -676,7 +694,7 @@ grey =
 
 darkGrey : Color
 darkGrey =
-    rgb255 204 204 204
+    rgb255 179 179 179
 
 
 white : Color
