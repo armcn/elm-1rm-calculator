@@ -208,11 +208,13 @@ view model =
         column
             [ centerX
             , width <| maximum maxWidth fill
-            , spacing <| padMd model
+            , spacing <| padSm model
             ]
             [ calculatorPanel model
+            , affiliateLink model
             , infoPanel model
             , developerLinks model
+            , affiliateLinks model
             ]
 
 
@@ -546,6 +548,41 @@ result model =
             ]
 
 
+affiliateLink : Model -> Element Msg
+affiliateLink model =
+    let
+        label =
+            paragraph []
+                [ el
+                    [ Font.color darkGrey ]
+                  <|
+                    text "Buy"
+                , el
+                    [ Font.color gold
+                    , Font.bold
+                    ]
+                  <|
+                    text " GOLD STANDARD "
+                , el
+                    [ Font.color darkGrey ]
+                  <|
+                    text "100% Whey Protein Powder"
+                ]
+    in
+    row
+        [ width fill ]
+        [ newTabLink
+            [ width fill
+            , Font.center
+            , Font.size <| fontMd model
+            , Font.family fontSecondary
+            ]
+            { url = "https://www.amazon.ca/gp/product/B08R8LRMWQ/ref=as_li_tl?ie=UTF8&camp=15121&creative=330641&creativeASIN=B08R8LRMWQ&linkCode=as2&tag=1repmaximum-20&linkId=906890c83da68e917254bfa8a78f8146"
+            , label = label
+            }
+        ]
+
+
 infoPanel : Model -> Element Msg
 infoPanel model =
     panel
@@ -659,6 +696,34 @@ developerLinks model =
         ]
 
 
+affiliateLinks : Model -> Element Msg
+affiliateLinks model =
+    let
+        singleLink src =
+            html <|
+                Html.iframe
+                    [ Html.Attributes.src src
+                    , Html.Attributes.style "width" "120px"
+                    , Html.Attributes.style "height" "240px"
+                    , Html.Attributes.style "marginwidth" "0"
+                    , Html.Attributes.style "marginheight" "0"
+                    , Html.Attributes.style "frameborder" "0"
+                    , Html.Attributes.style "scrolling" "no"
+                    ]
+                    []
+    in
+    row
+        [ centerX
+        , paddingEach { edges | top = padMd model }
+        ]
+    <|
+        List.map singleLink
+            [ "//ws-na.amazon-adsystem.com/widgets/cm?ref=tf_til&t=1repmaximum-20&m=amazon&o=15&p=8&l=as1&IS1=1&asins=B08R8LRMWQ&linkId=cb68196a37380a7ce5b4d9c43a3b0c03&bc1=FFFFFF&amp;lt1=_top&fc1=333333&lc1=0066C0&bg1=FFFFFF&f=ifr"
+            , "//ws-na.amazon-adsystem.com/widgets/cm?ref=tf_til&t=1repmaximum-20&m=amazon&o=15&p=8&l=as1&IS1=1&asins=B078RZZSF1&linkId=3884cb68c0639febf5ada4964108afa6&bc1=ffffff&amp;lt1=_top&fc1=333333&lc1=0066c0&bg1=ffffff&f=ifr"
+            , "//ws-na.amazon-adsystem.com/widgets/cm?ref=tf_til&t=1repmaximum-20&m=amazon&o=15&p=8&l=as1&IS1=1&asins=B074NSYGJ2&linkId=49117e07e31540b31d96d52880d6a6da&bc1=FFFFFF&amp;lt1=_top&fc1=333333&lc1=0066C0&bg1=FFFFFF&f=ifr"
+            ]
+
+
 panel : List (Element Msg) -> Model -> Element Msg
 panel children model =
     let
@@ -745,6 +810,11 @@ darkGrey =
 white : Color
 white =
     rgb255 255 255 255
+
+
+gold : Color
+gold =
+    rgb255 153 130 0
 
 
 padXxl : Model -> Int
