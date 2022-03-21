@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Dom exposing (focus)
 import Browser.Events
 import Element exposing (..)
 import Element.Background as Background
@@ -96,24 +97,35 @@ update msg model =
 updateWeight : String -> Model -> Model
 updateWeight numberString model =
     let
+        newWeight : Int
         newWeight =
             inputStringToNumber numberString model.weight
     in
-    { model | weight = newWeight }
+    if newWeight < 0 then
+        model
+
+    else
+        { model | weight = newWeight }
 
 
 updateReps : String -> Model -> Model
 updateReps numberString model =
     let
+        newReps : Int
         newReps =
             inputStringToNumber numberString model.reps
     in
-    { model | reps = newReps }
+    if newReps < 0 then
+        model
+
+    else
+        { model | reps = newReps }
 
 
 calculate : Model -> Model
 calculate model =
     let
+        oneRepMax : Int
         oneRepMax =
             if model.reps == 1 then
                 model.weight
@@ -217,16 +229,19 @@ title model =
 numberInputs : Model -> Element Msg
 numberInputs model =
     let
+        multiply : Element Msg
         multiply =
             el
-                [ Font.size <| fontLg model
+                [ centerY
+                , Font.size <| fontLg model
                 , Font.family fontPrimary
                 ]
             <|
                 text "x"
     in
     row
-        [ paddingEach { edges | top = padMd model }
+        [ width fill
+        , paddingEach { edges | top = padMd model }
         , spacing <| padXxs model
         ]
         [ weightInput model
@@ -238,6 +253,7 @@ numberInputs model =
 weightInput : Model -> Element Msg
 weightInput model =
     let
+        numberString : String
         numberString =
             if model.weight == 0 then
                 ""
@@ -259,6 +275,7 @@ weightInput model =
 repsInput : Model -> Element Msg
 repsInput model =
     let
+        numberString : String
         numberString =
             if model.reps == 0 then
                 ""
@@ -287,7 +304,8 @@ numberInputStyle =
             , color = grey
             }
     in
-    [ Border.width 2
+    [ width fill
+    , Border.width 2
     , Border.rounded 5
     , Border.color darkGrey
     , Border.innerShadow borderShadow
@@ -309,12 +327,9 @@ textInputPlaceholder placeholder =
 unitRadio : Model -> Element Msg
 unitRadio model =
     row
-        [ paddingEach { edges | top = padXs model }
-        ]
+        [ paddingEach { edges | top = padXs model } ]
         [ Input.radioRow
-            [ spacing <| padSm model
-            , Font.family fontSecondary
-            ]
+            [ spacing <| padSm model ]
             { onChange = ChangeUnit
             , selected = Just model.unit
             , options =
@@ -329,8 +344,8 @@ unitRadio model =
 radioOption : String -> Model -> Input.OptionState -> Element Msg
 radioOption label model state =
     let
-        backgroundColor : Color
-        backgroundColor =
+        selectedColor : Color
+        selectedColor =
             case state of
                 Input.Idle ->
                     white
@@ -341,8 +356,8 @@ radioOption label model state =
                 Input.Selected ->
                     blue
 
-        button : Element Msg
-        button =
+        radioButton : Element Msg
+        radioButton =
             el
                 [ width <| px 20
                 , height <| px 20
@@ -358,7 +373,7 @@ radioOption label model state =
                     , width <| px 14
                     , height <| px 14
                     , Border.rounded 7
-                    , Background.color backgroundColor
+                    , Background.color selectedColor
                     ]
                     none
 
@@ -371,9 +386,8 @@ radioOption label model state =
                 text label
     in
     row
-        [ spacing <| padXxs model
-        ]
-        [ button
+        [ spacing <| padXxs model ]
+        [ radioButton
         , textLabel
         ]
 
@@ -394,6 +408,7 @@ calculateButton model =
                 , bottom = padSm model
             }
 
+        label : Element Msg
         label =
             el
                 [ centerX
@@ -427,6 +442,7 @@ calculateButton model =
 result : Model -> Element Msg
 result model =
     let
+        unit : String
         unit =
             case model.unit of
                 Lb ->
@@ -435,6 +451,7 @@ result model =
                 Kg ->
                     " kg"
 
+        resultTitle : Element Msg
         resultTitle =
             el
                 [ centerX
@@ -444,6 +461,7 @@ result model =
             <|
                 text "Your Estimated 1 Rep Max"
 
+        oneRepMax : Element Msg
         oneRepMax =
             el
                 [ centerX
@@ -456,6 +474,7 @@ result model =
                         ++ unit
                 )
 
+        resetButton : Element Msg
         resetButton =
             Input.button
                 [ centerX
