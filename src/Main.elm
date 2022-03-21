@@ -304,6 +304,12 @@ infoContent model =
         ]
 
 
+panelShadow :
+    { offset : ( number, number )
+    , size : number
+    , blur : number
+    , color : Color
+    }
 panelShadow =
     { offset = ( 0, 6 )
     , size = 0
