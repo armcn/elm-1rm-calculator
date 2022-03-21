@@ -270,7 +270,7 @@ infoContent model =
         paragraphWithStyle content =
             paragraph
                 [ spacing <| padXxs model
-                , Font.size <| fontSm model
+                , Font.size <| fontMd model
                 , Font.family fontSecondary
                 , Font.alignLeft
                 ]
