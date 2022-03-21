@@ -686,7 +686,7 @@ developerLinks model =
         , spacing <| padXs model
         ]
         [ paragraph textStyle
-            [ text "Product designed by "
+            [ text "Product design by "
             , designerLink
             ]
         , paragraph textStyle
