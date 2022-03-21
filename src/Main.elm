@@ -278,7 +278,7 @@ infoContent model =
 
         moreInfoLink : Element Msg
         moreInfoLink =
-            link
+            newTabLink
                 [ Font.size <| fontMd model
                 , Font.color blue
                 , Font.family fontSecondary
