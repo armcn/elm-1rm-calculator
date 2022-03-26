@@ -318,6 +318,21 @@ viewDesktop model =
 darkModeSwitch : Model -> Element Msg
 darkModeSwitch model =
     let
+        iconWidth : Int
+        iconWidth =
+            scaleFromWidth 0.05 model
+
+        iconButtonWidth : Int
+        iconButtonWidth =
+            iconWidth + 12
+
+        roundedSize : Int
+        roundedSize =
+            iconButtonWidth
+                |> toFloat
+                |> (\x -> x / 2)
+                |> round
+
         icon : Icons.Icon Msg
         icon =
             if model.darkMode then
@@ -329,9 +344,8 @@ darkModeSwitch model =
         label : Element Msg
         label =
             el
-                [ width fill
-                , height fill
-                , centerX
+                [ centerX
+                , centerY
                 ]
             <|
                 html <|
@@ -341,12 +355,25 @@ darkModeSwitch model =
                                 switchColor model
                         , Svg.Attributes.height <|
                             String.fromInt <|
-                                scaleFromWidth 0.05 model
+                                iconWidth
                         ]
+
+        shadow =
+            { offset = ( 0, 4 )
+            , size = 2
+            , blur = 8
+            , color = shadowColor model
+            }
     in
     row
         [ alignRight ]
-        [ Input.button [ focused [] ]
+        [ Input.button
+            [ width <| px iconButtonWidth
+            , height <| px iconButtonWidth
+            , Border.rounded roundedSize
+            , Border.shadow shadow
+            , focused []
+            ]
             { onPress = Just SwitchDarkMode
             , label = label
             }
@@ -578,7 +605,7 @@ calculateButton model =
         label =
             el
                 [ centerX
-                , Font.color <| textColorSecondary model
+                , Font.color textColorSecondary
                 , Font.size <| fontXl model
                 , Font.letterSpacing 0.3
                 , Font.family fontPrimary
@@ -950,8 +977,8 @@ textColorPrimary model =
         black
 
 
-textColorSecondary : Model -> Color
-textColorSecondary model =
+textColorSecondary : Color
+textColorSecondary =
     white
 
 
