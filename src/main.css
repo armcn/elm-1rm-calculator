@@ -12,3 +12,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@600&display=swap');
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
