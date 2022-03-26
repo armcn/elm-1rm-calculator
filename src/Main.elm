@@ -535,7 +535,7 @@ radioOption label model state =
                     background model
 
                 Input.Selected ->
-                    accent model
+                    accentPrimary model
 
         radioButton : Element Msg
         radioButton =
@@ -603,7 +603,7 @@ calculateButton model =
         Input.button
             [ width fill
             , padding (padLg model)
-            , Background.color (accent model)
+            , Background.color (accentPrimary model)
             , Border.rounded 5
             , Border.shadow shadow4
             , focused []
@@ -655,7 +655,7 @@ result model =
                 Icons.reset
                     [ Svg.Attributes.fill <|
                         toSvgColor <|
-                            accent model
+                            accentSecondary model
                     , Svg.Attributes.height <|
                         String.fromInt <|
                             scaleFromWidth 0.1 model
@@ -751,10 +751,11 @@ infoContent model =
         paragraphWithStyle content =
             paragraph
                 [ spacing (padSm model)
+                , Font.alignLeft
                 , Font.size (fontMd model)
                 , Font.color (foreground model)
                 , Font.family fontSecondary
-                , Font.alignLeft
+                , Font.light
                 ]
                 [ text content ]
 
@@ -762,8 +763,9 @@ infoContent model =
         moreInfoLink =
             newTabLink
                 [ Font.size (fontLg model)
-                , Font.color (accent model)
+                , Font.color (accentSecondary model)
                 , Font.family fontSecondary
+                , Font.light
                 ]
                 { url = "https://en.wikipedia.org/wiki/One-repetition_maximum"
                 , label = text "More info about 1RM"
@@ -793,7 +795,7 @@ developerLinks model =
 
         linkStyle : List (Attribute Msg)
         linkStyle =
-            [ Font.color (accent model)
+            [ Font.color (accentSecondary model)
             , Font.bold
             ]
 
@@ -964,13 +966,22 @@ washHeavy model =
         darkGrey
 
 
-accent : Model -> Color
-accent model =
+accentPrimary : Model -> Color
+accentPrimary model =
+    if model.darkMode then
+        blue
+
+    else
+        darkBlue
+
+
+accentSecondary : Model -> Color
+accentSecondary model =
     if model.darkMode then
         lightBlue
 
     else
-        blue
+        darkBlue
 
 
 shadowColor : Model -> Color
@@ -989,11 +1000,16 @@ white =
 
 lightBlue : Color
 lightBlue =
-    rgb255 53 69 177
+    rgb255 0 98 255
 
 
 blue : Color
 blue =
+    rgb255 53 69 177
+
+
+darkBlue : Color
+darkBlue =
     rgb255 48 63 159
 
 
