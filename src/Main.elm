@@ -41,8 +41,15 @@ type alias Model =
     , darkMode : Bool
     , weight : Float
     , reps : Int
-    , oneRepMax : Int
     , unit : Unit
+    , oneRepMax : Int
+    }
+
+
+type alias Flags =
+    { width : Int
+    , height : Int
+    , darkMode : Bool
     }
 
 
@@ -50,20 +57,14 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     ( { screenSize = ScreenSize flags.width flags.height
       , device = classifyDevice flags.width flags.height
-      , darkMode = False
+      , darkMode = flags.darkMode
       , weight = 0
       , reps = 0
-      , oneRepMax = 0
       , unit = Lb
+      , oneRepMax = 0
       }
     , Cmd.none
     )
-
-
-type alias Flags =
-    { width : Int
-    , height : Int
-    }
 
 
 
@@ -75,10 +76,9 @@ type Msg
     | SwitchDarkMode
     | UpdateWeight String
     | UpdateReps String
-    | Calculate
     | ChangeUnit Unit
+    | Calculate
     | Reset
-    | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -104,9 +104,6 @@ update msg model =
 
         Reset ->
             ( reset model, Cmd.none )
-
-        NoOp ->
-            ( model, Cmd.none )
 
 
 setScreenSize : Int -> Int -> Model -> Model
@@ -237,7 +234,7 @@ viewPhone model =
                 , right = padSm model
                 , bottom = padXl model
             }
-        , Background.color <| pageBackgroundColor model
+        , Background.color <| background model
         , htmlAttribute <|
             Html.Attributes.style "overflow" "scroll"
         , onEnter Calculate
@@ -284,7 +281,7 @@ viewDesktop model =
                 , bottom = padLg model
             }
         , Background.color <|
-            pageBackgroundColor model
+            background model
         , htmlAttribute <|
             Html.Attributes.style "overflow" "scroll"
         , onEnter Calculate
@@ -352,13 +349,13 @@ darkModeSwitch model =
                     icon
                         [ Svg.Attributes.fill <|
                             toSvgColor <|
-                                switchColor model
+                                foreground model
                         , Svg.Attributes.height <|
                             String.fromInt <|
                                 iconWidth
                         ]
 
-        shadow =
+        shadow2 =
             { offset = ( 0, 4 )
             , size = 2
             , blur = 8
@@ -371,7 +368,7 @@ darkModeSwitch model =
             [ width <| px iconButtonWidth
             , height <| px iconButtonWidth
             , Border.rounded roundedSize
-            , Border.shadow shadow
+            , Border.shadow shadow2
             , focused []
             ]
             { onPress = Just SwitchDarkMode
@@ -400,7 +397,7 @@ calculatorTitle model =
             , Font.size <| fontXxl model
             , Font.letterSpacing 0.3
             , Font.family fontPrimary
-            , Font.color <| textColorPrimary model
+            , Font.color <| foreground model
             ]
           <|
             text "1 RM Calculator"
@@ -416,7 +413,7 @@ numberInputs model =
                 [ centerY
                 , Font.size <| fontLg model
                 , Font.family fontPrimary
-                , Font.color <| textColorPrimary model
+                , Font.color <| foreground model
                 ]
             <|
                 text "x"
@@ -487,15 +484,15 @@ numberInputStyle model =
             }
     in
     [ width fill
-    , Background.color <| pageBackgroundColor model
+    , Background.color <| background model
     , Border.width 1
     , Border.rounded 5
-    , Border.color <| backgroundSecondaryColor model
+    , Border.color <| washHeavy model
     , Border.innerShadow borderShadow
     , Font.alignLeft
     , Font.size <| fontLg model
     , Font.family fontSecondary
-    , Font.color <| textColorPrimary model
+    , Font.color <| foreground model
     , Element.htmlAttribute <|
         Html.Attributes.type_ "number"
     , focused []
@@ -508,7 +505,7 @@ textInputPlaceholder placeholder model =
         Input.placeholder
             [ alignLeft
             , Font.size <| fontLg model
-            , Font.color <| backgroundSecondaryColor model
+            , Font.color <| washHeavy model
             , Font.family fontSecondary
             ]
         <|
@@ -539,13 +536,13 @@ radioOption label model state =
         selectedColor =
             case state of
                 Input.Idle ->
-                    pageBackgroundColor model
+                    background model
 
                 Input.Focused ->
-                    pageBackgroundColor model
+                    background model
 
                 Input.Selected ->
-                    primaryColor model
+                    accent model
 
         radioButton : Element Msg
         radioButton =
@@ -553,10 +550,10 @@ radioOption label model state =
                 [ width <| px 20
                 , height <| px 20
                 , Background.color <|
-                    backgroundPrimaryColor model
+                    washLight model
                 , Border.rounded 10
                 , Border.width 1
-                , Border.color <| textColorPrimary model
+                , Border.color <| foreground model
                 ]
             <|
                 el
@@ -573,7 +570,7 @@ radioOption label model state =
             el
                 [ Font.size <| fontLg model
                 , Font.family fontSecondary
-                , Font.color <| textColorPrimary model
+                , Font.color <| foreground model
                 ]
             <|
                 text label
@@ -605,7 +602,7 @@ calculateButton model =
         label =
             el
                 [ centerX
-                , Font.color textColorSecondary
+                , Font.color white
                 , Font.size <| fontXl model
                 , Font.letterSpacing 0.3
                 , Font.family fontPrimary
@@ -621,7 +618,7 @@ calculateButton model =
             [ centerX
             , width fill
             , paddingEach pads
-            , Background.color <| primaryColor model
+            , Background.color <| accent model
             , Border.rounded 5
             , Border.shadow borderShadow
             , focused []
@@ -650,7 +647,7 @@ result model =
                 [ centerX
                 , Font.size <| fontLg model
                 , Font.family fontSecondary
-                , Font.color <| textColorPrimary model
+                , Font.color <| foreground model
                 ]
             <|
                 text "Your Estimated 1 Rep Max"
@@ -661,7 +658,7 @@ result model =
                 [ centerX
                 , Font.size <| font4Xl model
                 , Font.family fontPrimary
-                , Font.color <| textColorPrimary model
+                , Font.color <| foreground model
                 ]
             <|
                 text <|
@@ -680,7 +677,7 @@ result model =
                     Icons.reset
                         [ Svg.Attributes.fill <|
                             toSvgColor <|
-                                primaryColor model
+                                accent model
                         , Svg.Attributes.height <|
                             String.fromInt <|
                                 scaleFromWidth 0.1 model
@@ -726,7 +723,7 @@ affiliateLink model =
             paragraph []
                 [ el
                     [ Font.color <|
-                        backgroundSecondaryColor model
+                        washHeavy model
                     ]
                   <|
                     text "Buy"
@@ -738,7 +735,7 @@ affiliateLink model =
                     text " GOLD STANDARD "
                 , el
                     [ Font.color <|
-                        backgroundSecondaryColor model
+                        washHeavy model
                     ]
                   <|
                     text "100% Whey Protein Powder"
@@ -775,7 +772,7 @@ infoTitle model =
             , Font.size <| fontLg model
             , Font.letterSpacing 0.3
             , Font.family fontPrimary
-            , Font.color <| textColorPrimary model
+            , Font.color <| foreground model
             ]
           <|
             text "About 1 RM Calculator"
@@ -792,7 +789,7 @@ infoContent model =
                 , Font.size <| fontMd model
                 , Font.family fontSecondary
                 , Font.alignLeft
-                , Font.color <| textColorPrimary model
+                , Font.color <| foreground model
                 ]
                 [ text content ]
 
@@ -800,7 +797,7 @@ infoContent model =
         moreInfoLink =
             newTabLink
                 [ Font.size <| fontLg model
-                , Font.color <| primaryColor model
+                , Font.color <| accent model
                 , Font.family fontSecondary
                 ]
                 { url = "https://en.wikipedia.org/wiki/One-repetition_maximum"
@@ -828,7 +825,7 @@ developerLinks model =
         linkStyle : List (Attribute Msg)
         linkStyle =
             [ Font.center
-            , Font.color <| primaryColor model
+            , Font.color <| accent model
             , Font.size <| fontMd model
             , Font.family fontSecondary
             , Font.bold
@@ -837,7 +834,7 @@ developerLinks model =
         textStyle : List (Attribute Msg)
         textStyle =
             [ Font.center
-            , Font.color <| textColorPrimary model
+            , Font.color <| foreground model
             , Font.size <| fontMd model
             , Font.family fontSecondary
             ]
@@ -914,7 +911,7 @@ panel children model =
     column
         [ width fill
         , padding <| padMd model
-        , Background.color <| backgroundPrimaryColor model
+        , Background.color <| washLight model
         , Border.rounded 10
         , Border.shadow panelShadow
         ]
@@ -968,8 +965,17 @@ toSvgColor color =
         ]
 
 
-textColorPrimary : Model -> Color
-textColorPrimary model =
+background : Model -> Color
+background model =
+    if model.darkMode then
+        black
+
+    else
+        white
+
+
+foreground : Model -> Color
+foreground model =
     if model.darkMode then
         white
 
@@ -977,9 +983,31 @@ textColorPrimary model =
         black
 
 
-textColorSecondary : Color
-textColorSecondary =
-    white
+washLight : Model -> Color
+washLight model =
+    if model.darkMode then
+        slateGrey
+
+    else
+        lightGrey
+
+
+washHeavy : Model -> Color
+washHeavy model =
+    if model.darkMode then
+        lightGrey
+
+    else
+        darkGrey
+
+
+accent : Model -> Color
+accent model =
+    if model.darkMode then
+        lightBlue
+
+    else
+        blue
 
 
 shadowColor : Model -> Color
@@ -991,59 +1019,9 @@ shadowColor model =
         blackTranslucent
 
 
-primaryColor : Model -> Color
-primaryColor model =
-    if model.darkMode then
-        lightBlue
-
-    else
-        blue
-
-
-pageBackgroundColor : Model -> Color
-pageBackgroundColor model =
-    if model.darkMode then
-        black
-
-    else
-        white
-
-
-backgroundPrimaryColor : Model -> Color
-backgroundPrimaryColor model =
-    if model.darkMode then
-        slateGrey
-
-    else
-        lightGrey
-
-
-backgroundSecondaryColor : Model -> Color
-backgroundSecondaryColor model =
-    if model.darkMode then
-        lightGrey
-
-    else
-        darkGrey
-
-
-switchColor : Model -> Color
-switchColor model =
-    if model.darkMode then
-        white
-
-    else
-        slateGrey
-
-
 white : Color
 white =
     rgb255 255 255 255
-
-
-gold : Color
-gold =
-    rgb255 153 130 0
 
 
 lightBlue : Color
@@ -1054,6 +1032,11 @@ lightBlue =
 blue : Color
 blue =
     rgb255 48 63 159
+
+
+gold : Color
+gold =
+    rgb255 153 130 0
 
 
 lightGrey : Color
