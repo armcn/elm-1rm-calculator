@@ -8,7 +8,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
-import Html.Attributes
+import Html.Attributes exposing (title)
 import Html.Events
 import Icons
 import Json.Decode as Decode
@@ -25,6 +25,11 @@ type alias ScreenSize =
     }
 
 
+type Device
+    = Phone
+    | Desktop
+
+
 type Unit
     = Lb
     | Kg
@@ -32,6 +37,7 @@ type Unit
 
 type alias Model =
     { screenSize : ScreenSize
+    , device : Device
     , weight : Float
     , reps : Int
     , oneRepMax : Int
@@ -42,6 +48,7 @@ type alias Model =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     ( { screenSize = ScreenSize flags.width flags.height
+      , device = classifyDevice flags.width flags.height
       , weight = 0
       , reps = 0
       , oneRepMax = 0
@@ -75,7 +82,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetScreenSize width height ->
-            ( model, Cmd.none )
+            ( setScreenSize width height model, Cmd.none )
 
         UpdateWeight weight ->
             ( updateWeight weight model, Cmd.none )
@@ -94,6 +101,14 @@ update msg model =
 
         NoOp ->
             ( model, Cmd.none )
+
+
+setScreenSize : Int -> Int -> Model -> Model
+setScreenSize width height model =
+    { model
+        | screenSize = ScreenSize width height
+        , device = classifyDevice width height
+    }
 
 
 updateWeight : String -> Model -> Model
@@ -191,6 +206,16 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
+    case model.device of
+        Phone ->
+            viewPhone model
+
+        Desktop ->
+            viewDesktop model
+
+
+viewPhone : Model -> Html Msg
+viewPhone model =
     layout
         [ width fill
         , height fill
@@ -215,6 +240,41 @@ view model =
             , infoPanel model
             , developerLinks model
             , affiliateLinks model
+            ]
+
+
+viewDesktop : Model -> Html Msg
+viewDesktop model =
+    let
+        columnStyle : List (Attribute Msg)
+        columnStyle =
+            [ width <| maximum maxWidth fill
+            , spacing <| padSm model
+            , alignTop
+            ]
+    in
+    layout
+        [ width fill
+        , padding <| padLg model
+        , htmlAttribute <|
+            Html.Attributes.style "overflow" "scroll"
+        , onEnter Calculate
+        ]
+    <|
+        row
+            [ centerX
+            , spacing <| padXl model
+            ]
+            [ column
+                columnStyle
+                [ calculatorPanel model
+                , affiliateLinks model
+                , developerLinks model
+                ]
+            , column
+                columnStyle
+                [ infoPanel model
+                ]
             ]
 
 
@@ -714,7 +774,7 @@ affiliateLinks model =
     in
     row
         [ centerX
-        , paddingEach { edges | top = padMd model }
+        , paddingEach { edges | top = padSm model }
         ]
     <|
         List.map singleLink
@@ -760,6 +820,15 @@ onEnter msg =
     in
     htmlAttribute <|
         Html.Events.on "keyup" enterPressed
+
+
+classifyDevice : Int -> Int -> Device
+classifyDevice width _ =
+    if width < 1000 then
+        Phone
+
+    else
+        Desktop
 
 
 toSvgColor : Color -> String
@@ -900,7 +969,7 @@ scaleFont =
 scaleFromWidth : Float -> Model -> Int
 scaleFromWidth factor model =
     scale factor <|
-        min model.screenSize.width maxWidth
+        min maxWidth model.screenSize.width
 
 
 maxWidth : Int
