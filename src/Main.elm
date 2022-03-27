@@ -227,16 +227,20 @@ updateCalculate calculateMsg model =
                     CalcPressed
 
                 CalcUnpress ->
-                    CalcHovered
+                    CalcResting
 
                 CalcLeave ->
                     CalcResting
+
+        newModel : Model
+        newModel =
+            { model | calcButtonState = calcButtonState }
     in
-    if calculateMsg == CalcClick || calculateMsg == CalcPress then
-        calculate model
+    if calculateMsg == CalcUnpress || calculateMsg == CalcClick then
+        calculate newModel
 
     else
-        { model | calcButtonState = calcButtonState }
+        newModel
 
 
 calculate : Model -> Model
@@ -268,16 +272,20 @@ updateReset resetMsg model =
                     ResetPressed
 
                 ResetUnpress ->
-                    ResetHovered
+                    ResetResting
 
                 ResetLeave ->
                     ResetResting
+
+        newModel : Model
+        newModel =
+            { model | resetButtonState = resetButtonState }
     in
-    if resetMsg == ResetPress then
-        reset model
+    if resetMsg == ResetUnpress then
+        reset newModel
 
     else
-        { model | resetButtonState = resetButtonState }
+        newModel
 
 
 reset : Model -> Model
