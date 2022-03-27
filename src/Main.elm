@@ -5,6 +5,7 @@ import Browser.Events
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
@@ -35,6 +36,12 @@ type Unit
     | Kg
 
 
+type CalcButtonState
+    = Resting
+    | Hovered
+    | Pressed
+
+
 type alias Model =
     { screenSize : ScreenSize
     , device : Device
@@ -43,6 +50,7 @@ type alias Model =
     , reps : Int
     , unit : Unit
     , oneRepMax : Int
+    , calcButtonState : CalcButtonState
     }
 
 
@@ -62,6 +70,7 @@ init flags =
       , reps = 0
       , unit = Lb
       , oneRepMax = 0
+      , calcButtonState = Resting
       }
     , Cmd.none
     )
@@ -71,13 +80,20 @@ init flags =
 ---- UPDATE ----
 
 
+type CalculateMsg
+    = Hover
+    | Press
+    | Unpress
+    | Leave
+
+
 type Msg
     = SetScreenSize Int Int
     | ToggleDarkMode
     | UpdateWeight String
     | UpdateReps String
     | ChangeUnit Unit
-    | Calculate
+    | UpdateCalculate CalculateMsg
     | Reset
 
 
@@ -99,8 +115,8 @@ update msg model =
         ChangeUnit unit ->
             ( changeUnit unit model, Cmd.none )
 
-        Calculate ->
-            ( calculate model, Cmd.none )
+        UpdateCalculate calculateMsg ->
+            ( updateCalculate calculateMsg model, Cmd.none )
 
         Reset ->
             ( reset model, Cmd.none )
@@ -174,6 +190,31 @@ changeUnit unit model =
     { model | unit = unit }
 
 
+updateCalculate : CalculateMsg -> Model -> Model
+updateCalculate calculateMsg model =
+    let
+        calcButtonState : CalcButtonState
+        calcButtonState =
+            case calculateMsg of
+                Hover ->
+                    Hovered
+
+                Press ->
+                    Pressed
+
+                Unpress ->
+                    Hovered
+
+                Leave ->
+                    Resting
+    in
+    if calculateMsg == Press then
+        calculate model
+
+    else
+        { model | calcButtonState = calcButtonState }
+
+
 calculate : Model -> Model
 calculate model =
     let
@@ -187,7 +228,10 @@ calculate model =
                     * (1 + toFloat model.reps / 30)
                     |> round
     in
-    { model | oneRepMax = oneRepMax }
+    { model
+        | calcButtonState = Pressed
+        , oneRepMax = oneRepMax
+    }
 
 
 reset : Model -> Model
@@ -238,7 +282,7 @@ viewPhone model =
         , height fill
         , paddingEach pads
         , Background.color (background model)
-        , onEnter Calculate
+        , onEnter (UpdateCalculate Press)
         , overflowScroll
         ]
     <|
@@ -280,7 +324,7 @@ viewDesktop model =
         [ width fill
         , paddingEach pads
         , Background.color (background model)
-        , onEnter Calculate
+        , onEnter (UpdateCalculate Press)
         , overflowScroll
         ]
     <|
@@ -577,6 +621,45 @@ radioOption label model state =
 calculateButton : Model -> Element Msg
 calculateButton model =
     let
+        shadowY : Float
+        shadowY =
+            4
+
+        shadow =
+            case model.calcButtonState of
+                Resting ->
+                    { offset = ( 0, shadowY )
+                    , size = 0
+                    , blur = shadowY
+                    , color = shadowColor model
+                    }
+
+                Hovered ->
+                    { offset = ( 0, shadowY * 3 )
+                    , size = 2
+                    , blur = shadowY * 3
+                    , color = shadowColor model
+                    }
+
+                Pressed ->
+                    { offset = ( 0, 0 )
+                    , size = 0
+                    , blur = 0
+                    , color = shadowColor model
+                    }
+
+        letterSpacing : Float
+        letterSpacing =
+            case model.calcButtonState of
+                Resting ->
+                    0.3
+
+                Hovered ->
+                    0.4
+
+                Pressed ->
+                    0.2
+
         label : Element Msg
         label =
             el
@@ -584,16 +667,9 @@ calculateButton model =
                 , Font.size (fontXl model)
                 , Font.color white
                 , Font.family fontPrimary
-                , Font.letterSpacing 0.3
+                , Font.letterSpacing letterSpacing
                 ]
                 (text "Calculate 1 RM")
-
-        shadow4 =
-            { offset = ( 0, 2 )
-            , size = 0
-            , blur = 4
-            , color = shadowColor model
-            }
     in
     el
         [ width fill
@@ -605,10 +681,14 @@ calculateButton model =
             , padding (padLg model)
             , Background.color (accentPrimary model)
             , Border.rounded 5
-            , Border.shadow shadow4
+            , Border.shadow shadow
+            , Events.onMouseEnter (UpdateCalculate Hover)
+            , Events.onMouseDown (UpdateCalculate Press)
+            , Events.onMouseUp (UpdateCalculate Unpress)
+            , Events.onMouseLeave (UpdateCalculate Leave)
             , focused []
             ]
-            { onPress = Just Calculate
+            { onPress = Nothing
             , label = label
             }
 
@@ -776,7 +856,7 @@ infoContent model =
         , spacing (padXl model)
         ]
         [ paragraphWithStyle "A one repetition maximum (one rep max or 1RM) in weight training is the maximum amount of weight that a person can possibly lift for one repetition. It can be used for determining an individuals maximum strength and is the method for determining the winner in events such as powerlifting and weightlifting competitions. A one repetition maximum can also be used as an upper limit, in order to determine the desired load for an exercise (as a percentage of the 1RM)."
-        , paragraphWithStyle "The 1RM can either be calculated directly using maximal testing or indirectly using submaximal estimation. The submaximal estimation method is preferred as it is safer, quicker, and less unnerving for inexperienced exercisers, however, it may underestimate the actual 1RM. One rep maximum calculators are used to predict a one rep maximum lift. The degree of accuracy can vary largely depending on the weight training experience and muscular composition of the athlete. Also, most one rep maximum calculators are designed for seasoned strength trainers, and those with little experience may find their actual one rep maximum is much lower because their nervous system cannot handle the stress of a high weight. This test should be performed with a spotter for reasons of safety."
+        , paragraphWithStyle "The 1RM can either be PressCalculated directly using maximal testing or indirectly using submaximal estimation. The submaximal estimation method is preferred as it is safer, quicker, and less unnerving for inexperienced exercisers, however, it may underestimate the actual 1RM. One rep maximum calculators are used to predict a one rep maximum lift. The degree of accuracy can vary largely depending on the weight training experience and muscular composition of the athlete. Also, most one rep maximum calculators are designed for seasoned strength trainers, and those with little experience may find their actual one rep maximum is much lower because their nervous system cannot handle the stress of a high weight. This test should be performed with a spotter for reasons of safety."
         , paragraphWithStyle "There are several common formulas used to estimate 1RM using the submaximal method, the Epley and the Brzycki being the most common. This app uses the Epley method."
         , moreInfoLink
         ]
