@@ -25,3 +25,7 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+svg {
+  transform: transform 0.1s ease-out;
+}

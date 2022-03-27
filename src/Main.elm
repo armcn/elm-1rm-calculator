@@ -13,6 +13,7 @@ import Html.Attributes
 import Html.Events
 import Icons
 import Json.Decode as Decode
+import Svg
 import Svg.Attributes
 
 
@@ -37,9 +38,15 @@ type Unit
 
 
 type CalcButtonState
-    = Resting
-    | Hovered
-    | Pressed
+    = CalcResting
+    | CalcHovered
+    | CalcPressed
+
+
+type ResetButtonState
+    = ResetResting
+    | ResetHovered
+    | ResetPressed
 
 
 type alias Model =
@@ -51,6 +58,7 @@ type alias Model =
     , unit : Unit
     , oneRepMax : Int
     , calcButtonState : CalcButtonState
+    , resetButtonState : ResetButtonState
     }
 
 
@@ -70,7 +78,8 @@ init flags =
       , reps = 0
       , unit = Lb
       , oneRepMax = 0
-      , calcButtonState = Resting
+      , calcButtonState = CalcResting
+      , resetButtonState = ResetResting
       }
     , Cmd.none
     )
@@ -81,10 +90,18 @@ init flags =
 
 
 type CalculateMsg
-    = Hover
-    | Press
-    | Unpress
-    | Leave
+    = CalcClick
+    | CalcHover
+    | CalcPress
+    | CalcUnpress
+    | CalcLeave
+
+
+type ResetMsg
+    = ResetHover
+    | ResetPress
+    | ResetUnpress
+    | ResetLeave
 
 
 type Msg
@@ -94,6 +111,7 @@ type Msg
     | UpdateReps String
     | ChangeUnit Unit
     | UpdateCalculate CalculateMsg
+    | UpdateReset ResetMsg
     | Reset
 
 
@@ -117,6 +135,9 @@ update msg model =
 
         UpdateCalculate calculateMsg ->
             ( updateCalculate calculateMsg model, Cmd.none )
+
+        UpdateReset resetMsg ->
+            ( updateReset resetMsg model, Cmd.none )
 
         Reset ->
             ( reset model, Cmd.none )
@@ -196,19 +217,22 @@ updateCalculate calculateMsg model =
         calcButtonState : CalcButtonState
         calcButtonState =
             case calculateMsg of
-                Hover ->
-                    Hovered
+                CalcClick ->
+                    CalcResting
 
-                Press ->
-                    Pressed
+                CalcHover ->
+                    CalcHovered
 
-                Unpress ->
-                    Hovered
+                CalcPress ->
+                    CalcPressed
 
-                Leave ->
-                    Resting
+                CalcUnpress ->
+                    CalcHovered
+
+                CalcLeave ->
+                    CalcResting
     in
-    if calculateMsg == Press then
+    if calculateMsg == CalcClick || calculateMsg == CalcPress then
         calculate model
 
     else
@@ -228,10 +252,32 @@ calculate model =
                     * (1 + toFloat model.reps / 30)
                     |> round
     in
-    { model
-        | calcButtonState = Pressed
-        , oneRepMax = oneRepMax
-    }
+    { model | oneRepMax = oneRepMax }
+
+
+updateReset : ResetMsg -> Model -> Model
+updateReset resetMsg model =
+    let
+        resetButtonState : ResetButtonState
+        resetButtonState =
+            case resetMsg of
+                ResetHover ->
+                    ResetHovered
+
+                ResetPress ->
+                    ResetPressed
+
+                ResetUnpress ->
+                    ResetHovered
+
+                ResetLeave ->
+                    ResetResting
+    in
+    if resetMsg == ResetPress then
+        reset model
+
+    else
+        { model | resetButtonState = resetButtonState }
 
 
 reset : Model -> Model
@@ -282,7 +328,7 @@ viewPhone model =
         , height fill
         , paddingEach pads
         , Background.color (background model)
-        , onEnter (UpdateCalculate Press)
+        , onEnter (UpdateCalculate CalcClick)
         , overflowScroll
         ]
     <|
@@ -324,7 +370,7 @@ viewDesktop model =
         [ width fill
         , paddingEach pads
         , Background.color (background model)
-        , onEnter (UpdateCalculate Press)
+        , onEnter (UpdateCalculate CalcClick)
         , overflowScroll
         ]
     <|
@@ -386,7 +432,7 @@ darkModeToggle model =
                                 iconWidth
                         ]
 
-        shadow2 =
+        shadow =
             { offset = ( 0, 4 )
             , size = 2
             , blur = 8
@@ -401,7 +447,7 @@ darkModeToggle model =
             [ width (px iconButtonWidth)
             , height (px iconButtonWidth)
             , Border.rounded radius
-            , Border.shadow shadow2
+            , Border.shadow shadow
             , focused []
             ]
             { onPress = Just ToggleDarkMode
@@ -627,21 +673,21 @@ calculateButton model =
 
         shadow =
             case model.calcButtonState of
-                Resting ->
+                CalcResting ->
                     { offset = ( 0, shadowY )
                     , size = 0
                     , blur = shadowY
                     , color = shadowColor model
                     }
 
-                Hovered ->
+                CalcHovered ->
                     { offset = ( 0, shadowY * 3 )
                     , size = 2
                     , blur = shadowY * 3
                     , color = shadowColor model
                     }
 
-                Pressed ->
+                CalcPressed ->
                     { offset = ( 0, 0 )
                     , size = 0
                     , blur = 0
@@ -651,13 +697,13 @@ calculateButton model =
         letterSpacing : Float
         letterSpacing =
             case model.calcButtonState of
-                Resting ->
+                CalcResting ->
                     0.3
 
-                Hovered ->
+                CalcHovered ->
                     0.4
 
-                Pressed ->
+                CalcPressed ->
                     0.2
 
         label : Element Msg
@@ -682,10 +728,10 @@ calculateButton model =
             , Background.color (accentPrimary model)
             , Border.rounded 5
             , Border.shadow shadow
-            , Events.onMouseEnter (UpdateCalculate Hover)
-            , Events.onMouseDown (UpdateCalculate Press)
-            , Events.onMouseUp (UpdateCalculate Unpress)
-            , Events.onMouseLeave (UpdateCalculate Leave)
+            , Events.onMouseEnter (UpdateCalculate CalcHover)
+            , Events.onMouseDown (UpdateCalculate CalcPress)
+            , Events.onMouseUp (UpdateCalculate CalcUnpress)
+            , Events.onMouseLeave (UpdateCalculate CalcLeave)
             , focused []
             ]
             { onPress = Nothing
@@ -728,28 +774,6 @@ result model =
                     String.fromInt model.oneRepMax
                         ++ " "
                         ++ unitString
-
-        resetlabel : Element Msg
-        resetlabel =
-            html <|
-                Icons.reset
-                    [ Svg.Attributes.fill <|
-                        toSvgColor <|
-                            accentSecondary model
-                    , Svg.Attributes.height <|
-                        String.fromInt <|
-                            scaleFromWidth 0.1 model
-                    ]
-
-        resetButton : Element Msg
-        resetButton =
-            Input.button
-                [ centerX
-                , focused []
-                ]
-                { onPress = Just Reset
-                , label = resetlabel
-                }
     in
     if model.oneRepMax == 0 then
         none
@@ -770,8 +794,94 @@ result model =
                 [ width fill
                 , paddingEach { edges | top = pad2Xl model }
                 ]
-                resetButton
+                (resetButton model)
             ]
+
+
+resetButton : Model -> Element Msg
+resetButton model =
+    let
+        iconWidth : Int
+        iconWidth =
+            scaleFromWidth 0.07 model
+
+        iconButtonWidth : Int
+        iconButtonWidth =
+            iconWidth + padSm model
+
+        radius : Int
+        radius =
+            iconButtonWidth
+                |> toFloat
+                |> (\x -> x / 2)
+                |> round
+
+        rotateIcon : String
+        rotateIcon =
+            if model.resetButtonState == ResetHovered then
+                "rotate(-45)"
+
+            else
+                "rotate(0"
+
+        label : Element Msg
+        label =
+            el [ centerX, centerY ] <|
+                html <|
+                    Icons.reset
+                        [ Svg.Attributes.fill <|
+                            toSvgColor <|
+                                accentSecondary model
+                        , Svg.Attributes.height <|
+                            String.fromInt <|
+                                iconWidth
+                        , Svg.Attributes.transform rotateIcon
+                        ]
+
+        shadowY : Float
+        shadowY =
+            3
+
+        shadow =
+            case model.resetButtonState of
+                ResetResting ->
+                    { offset = ( 0, shadowY )
+                    , size = 1
+                    , blur = shadowY
+                    , color = shadowColor model
+                    }
+
+                ResetHovered ->
+                    { offset = ( 0, shadowY * 2 )
+                    , size = 2
+                    , blur = shadowY * 3
+                    , color = shadowColor model
+                    }
+
+                ResetPressed ->
+                    { offset = ( 0, 0 )
+                    , size = 0
+                    , blur = 0
+                    , color = shadowColor model
+                    }
+    in
+    row
+        [ centerX ]
+        [ Input.button
+            [ width (px iconButtonWidth)
+            , height (px iconButtonWidth)
+            , Border.rounded radius
+            , Border.shadow shadow
+            , Events.onMouseEnter (UpdateReset ResetHover)
+            , Events.onMouseDown (UpdateReset ResetPress)
+            , Events.onMouseUp (UpdateReset ResetUnpress)
+            , Events.onMouseLeave (UpdateReset ResetLeave)
+            , focused []
+            ]
+            { onPress = Nothing
+            , label = label
+            }
+        ]
 
 
 affiliateTextLink : Model -> Element Msg
@@ -780,7 +890,7 @@ affiliateTextLink model =
         label : Element Msg
         label =
             paragraph
-                [ Font.size <| fontMd model
+                [ Font.size (fontMd model)
                 , Font.family fontSecondary
                 ]
                 [ el
