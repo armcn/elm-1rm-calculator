@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Browser.Events
+import Colors
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -13,8 +14,10 @@ import Html.Attributes
 import Html.Events
 import Icons
 import Json.Decode as Decode
-import Svg
+import Padding exposing (..)
 import Svg.Attributes
+import Typography exposing (..)
+import Utils
 
 
 
@@ -325,17 +328,17 @@ viewPhone model =
     let
         pads =
             { edges
-                | top = padSm model
-                , left = padLg model
-                , right = padLg model
-                , bottom = pad3Xl model
+                | top = padSm model.screenSize.width
+                , left = padLg model.screenSize.width
+                , right = padLg model.screenSize.width
+                , bottom = pad3Xl model.screenSize.width
             }
     in
     layout
         [ width fill
         , height fill
         , paddingEach pads
-        , Background.color (background model)
+        , Background.color (Colors.background model.darkMode)
         , onEnter (UpdateCalculate CalcClick)
         , overflowScroll
         ]
@@ -344,8 +347,8 @@ viewPhone model =
             [ darkModeToggle model
             , column
                 [ centerX
-                , width (maximum maxScreenWidth fill)
-                , spacing (padLg model)
+                , width (maximum Utils.maxScreenWidth fill)
+                , spacing (padLg model.screenSize.width)
                 ]
                 [ calculatorPanel model
                 , affiliateTextLink model
@@ -361,23 +364,23 @@ viewDesktop model =
     let
         columnStyle : List (Attribute Msg)
         columnStyle =
-            [ width (maximum maxScreenWidth fill)
-            , spacing (padLg model)
+            [ width (maximum Utils.maxScreenWidth fill)
+            , spacing (padLg model.screenSize.width)
             , alignTop
             ]
 
         pads =
             { edges
-                | top = padMd model
-                , left = pad2Xl model
-                , right = pad2Xl model
-                , bottom = pad2Xl model
+                | top = padMd model.screenSize.width
+                , left = pad2Xl model.screenSize.width
+                , right = pad2Xl model.screenSize.width
+                , bottom = pad2Xl model.screenSize.width
             }
     in
     layout
         [ width fill
         , paddingEach pads
-        , Background.color (background model)
+        , Background.color (Colors.background model.darkMode)
         , onEnter (UpdateCalculate CalcClick)
         , overflowScroll
         ]
@@ -386,7 +389,7 @@ viewDesktop model =
             [ darkModeToggle model
             , row
                 [ centerX
-                , spacing (pad3Xl model)
+                , spacing (pad3Xl model.screenSize.width)
                 ]
                 [ column
                     columnStyle
@@ -406,11 +409,11 @@ darkModeToggle model =
     let
         iconWidth : Int
         iconWidth =
-            scaleFromWidth 0.05 model
+            Utils.scaleFromWidth 0.05 model.screenSize.width
 
         iconButtonWidth : Int
         iconButtonWidth =
-            iconWidth + padSm model
+            iconWidth + padSm model.screenSize.width
 
         radius : Int
         radius =
@@ -433,8 +436,8 @@ darkModeToggle model =
                 html <|
                     icon
                         [ Svg.Attributes.fill <|
-                            toSvgColor <|
-                                foreground model
+                            Colors.toSvgColor <|
+                                Colors.foreground model.darkMode
                         , Svg.Attributes.height <|
                             String.fromInt <|
                                 iconWidth
@@ -444,12 +447,12 @@ darkModeToggle model =
             { offset = ( 0, 4 )
             , size = 2
             , blur = 8
-            , color = shadowColor model
+            , color = Colors.shadowColor model.darkMode
             }
     in
     row
         [ alignRight
-        , paddingEach { edges | bottom = padSm model }
+        , paddingEach { edges | bottom = padSm model.screenSize.width }
         ]
         [ Input.button
             [ width (px iconButtonWidth)
@@ -480,8 +483,8 @@ calculatorTitle : Model -> Element Msg
 calculatorTitle model =
     el
         [ centerX
-        , Font.size (font2xl model)
-        , Font.color (foreground model)
+        , Font.size (font2Xl model.screenSize.width)
+        , Font.color (Colors.foreground model.darkMode)
         , Font.family fontPrimary
         , Font.letterSpacing 0.3
         ]
@@ -495,15 +498,15 @@ numberInputs model =
         multiply =
             el
                 [ centerY
-                , Font.size (fontLg model)
-                , Font.color (foreground model)
+                , Font.size (fontLg model.screenSize.width)
+                , Font.color (Colors.foreground model.darkMode)
                 , Font.family fontPrimary
                 ]
                 (text "x")
     in
     row
-        [ paddingEach { edges | top = padXl model }
-        , spacing (padSm model)
+        [ paddingEach { edges | top = padXl model.screenSize.width }
+        , spacing (padSm model.screenSize.width)
         ]
         [ weightInput model
         , multiply
@@ -558,18 +561,18 @@ numberInputStyle model =
             { offset = ( 0, 2 )
             , size = 0
             , blur = 4
-            , color = shadowColor model
+            , color = Colors.shadowColor model.darkMode
             }
     in
     [ width fill
     , Border.width 1
     , Border.rounded 5
-    , Background.color (background model)
-    , Border.color (washHeavy model)
+    , Background.color (Colors.background model.darkMode)
+    , Border.color (Colors.washHeavy model.darkMode)
     , Border.innerShadow shadow3
     , Font.alignLeft
-    , Font.size (fontLg model)
-    , Font.color (foreground model)
+    , Font.size (fontLg model.screenSize.width)
+    , Font.color (Colors.foreground model.darkMode)
     , Font.family fontSecondary
     , Element.htmlAttribute (Html.Attributes.type_ "number")
     , focused []
@@ -580,8 +583,8 @@ numberInputPlaceholder : String -> Model -> Maybe (Input.Placeholder Msg)
 numberInputPlaceholder placeholder model =
     Input.placeholder
         [ alignLeft
-        , Font.size (fontLg model)
-        , Font.color (washHeavy model)
+        , Font.size (fontLg model.screenSize.width)
+        , Font.color (Colors.washHeavy model.darkMode)
         , Font.family fontSecondary
         ]
         (text placeholder)
@@ -591,8 +594,8 @@ numberInputPlaceholder placeholder model =
 unitRadio : Model -> Element Msg
 unitRadio model =
     Input.radioRow
-        [ paddingEach { edges | top = padMd model }
-        , spacing (padLg model)
+        [ paddingEach { edges | top = padMd model.screenSize.width }
+        , spacing (padLg model.screenSize.width)
         ]
         { onChange = ChangeUnit
         , selected = Just model.unit
@@ -627,22 +630,22 @@ radioOption label model state =
         selectedColor =
             case state of
                 Input.Idle ->
-                    background model
+                    Colors.background model.darkMode
 
                 Input.Focused ->
-                    background model
+                    Colors.background model.darkMode
 
                 Input.Selected ->
-                    accentPrimary model
+                    Colors.accentPrimary model.darkMode
 
         radioButton : Element Msg
         radioButton =
             el
                 [ width (px outerDiameter)
                 , height (px outerDiameter)
-                , Background.color (washLight model)
+                , Background.color (Colors.washLight model.darkMode)
                 , Border.width 1
-                , Border.color (foreground model)
+                , Border.color (Colors.foreground model.darkMode)
                 , Border.rounded outerRadius
                 ]
             <|
@@ -659,14 +662,14 @@ radioOption label model state =
         textLabel : Element Msg
         textLabel =
             el
-                [ Font.size (fontLg model)
-                , Font.color (foreground model)
+                [ Font.size (fontLg model.screenSize.width)
+                , Font.color (Colors.foreground model.darkMode)
                 , Font.family fontSecondary
                 ]
                 (text label)
     in
     row
-        [ spacing (padSm model) ]
+        [ spacing (padSm model.screenSize.width) ]
         [ radioButton
         , textLabel
         ]
@@ -685,21 +688,21 @@ calculateButton model =
                     { offset = ( 0, shadowY )
                     , size = 0
                     , blur = shadowY
-                    , color = shadowColor model
+                    , color = Colors.shadowColor model.darkMode
                     }
 
                 CalcHovered ->
                     { offset = ( 0, shadowY * 3 )
                     , size = 2
                     , blur = shadowY * 3
-                    , color = shadowColor model
+                    , color = Colors.shadowColor model.darkMode
                     }
 
                 CalcPressed ->
                     { offset = ( 0, 0 )
                     , size = 0
                     , blur = 0
-                    , color = shadowColor model
+                    , color = Colors.shadowColor model.darkMode
                     }
 
         letterSpacing : Float
@@ -718,8 +721,8 @@ calculateButton model =
         label =
             el
                 [ centerX
-                , Font.size (fontXl model)
-                , Font.color white
+                , Font.size (fontXl model.screenSize.width)
+                , Font.color Colors.white
                 , Font.family fontPrimary
                 , Font.letterSpacing letterSpacing
                 ]
@@ -727,13 +730,13 @@ calculateButton model =
     in
     el
         [ width fill
-        , paddingEach { edges | top = padXl model }
+        , paddingEach { edges | top = padXl model.screenSize.width }
         ]
     <|
         Input.button
             [ width fill
-            , padding (padLg model)
-            , Background.color (accentPrimary model)
+            , padding (padLg model.screenSize.width)
+            , Background.color (Colors.accentPrimary model.darkMode)
             , Border.rounded 5
             , Border.shadow shadow
             , Events.onMouseEnter (UpdateCalculate CalcHover)
@@ -763,8 +766,8 @@ result model =
         resultTitle =
             el
                 [ centerX
-                , Font.size (fontLg model)
-                , Font.color (foreground model)
+                , Font.size (fontLg model.screenSize.width)
+                , Font.color (Colors.foreground model.darkMode)
                 , Font.family fontSecondary
                 ]
                 (text "Your Estimated 1 Rep Max")
@@ -773,8 +776,8 @@ result model =
         resultValue =
             el
                 [ centerX
-                , Font.size (font4Xl model)
-                , Font.color (foreground model)
+                , Font.size (font4Xl model.screenSize.width)
+                , Font.color (Colors.foreground model.darkMode)
                 , Font.family fontPrimary
                 ]
             <|
@@ -790,17 +793,17 @@ result model =
         column [ width fill ]
             [ el
                 [ width fill
-                , paddingEach { edges | top = pad2Xl model }
+                , paddingEach { edges | top = pad2Xl model.screenSize.width }
                 ]
                 resultTitle
             , el
                 [ width fill
-                , paddingEach { edges | top = padMd model }
+                , paddingEach { edges | top = padMd model.screenSize.width }
                 ]
                 resultValue
             , el
                 [ width fill
-                , paddingEach { edges | top = pad2Xl model }
+                , paddingEach { edges | top = pad2Xl model.screenSize.width }
                 ]
                 (resetButton model)
             ]
@@ -811,11 +814,11 @@ resetButton model =
     let
         iconWidth : Int
         iconWidth =
-            scaleFromWidth 0.07 model
+            Utils.scaleFromWidth 0.07 model.screenSize.width
 
         iconButtonWidth : Int
         iconButtonWidth =
-            iconWidth + padSm model
+            iconWidth + padSm model.screenSize.width
 
         radius : Int
         radius =
@@ -838,8 +841,8 @@ resetButton model =
                 html <|
                     Icons.reset
                         [ Svg.Attributes.fill <|
-                            toSvgColor <|
-                                accentSecondary model
+                            Colors.toSvgColor <|
+                                Colors.accentSecondary model.darkMode
                         , Svg.Attributes.height <|
                             String.fromInt <|
                                 iconWidth
@@ -856,21 +859,21 @@ resetButton model =
                     { offset = ( 0, shadowY )
                     , size = 1
                     , blur = shadowY
-                    , color = shadowColor model
+                    , color = Colors.shadowColor model.darkMode
                     }
 
                 ResetHovered ->
                     { offset = ( 0, shadowY * 2 )
                     , size = 2
                     , blur = shadowY * 3
-                    , color = shadowColor model
+                    , color = Colors.shadowColor model.darkMode
                     }
 
                 ResetPressed ->
                     { offset = ( 0, 0 )
                     , size = 0
                     , blur = 0
-                    , color = shadowColor model
+                    , color = Colors.shadowColor model.darkMode
                     }
     in
     row
@@ -898,19 +901,19 @@ affiliateTextLink model =
         label : Element Msg
         label =
             paragraph
-                [ Font.size (fontMd model)
+                [ Font.size (fontMd model.screenSize.width)
                 , Font.family fontSecondary
                 ]
                 [ el
-                    [ Font.color (washHeavy model) ]
+                    [ Font.color (Colors.washHeavy model.darkMode) ]
                     (text "Buy")
                 , el
-                    [ Font.color gold
+                    [ Font.color Colors.gold
                     , Font.bold
                     ]
                     (text " GOLD STANDARD ")
                 , el
-                    [ Font.color (washHeavy model) ]
+                    [ Font.color (Colors.washHeavy model.darkMode) ]
                     (text "100% Whey Protein Powder")
                 ]
     in
@@ -934,8 +937,8 @@ infoTitle : Model -> Element Msg
 infoTitle model =
     el
         [ centerX
-        , Font.size <| fontLg model
-        , Font.color <| foreground model
+        , Font.size (fontLg model.screenSize.width)
+        , Font.color (Colors.foreground model.darkMode)
         , Font.family fontPrimary
         , Font.letterSpacing 0.3
         ]
@@ -948,10 +951,10 @@ infoContent model =
         paragraphWithStyle : String -> Element Msg
         paragraphWithStyle content =
             paragraph
-                [ spacing (padSm model)
+                [ spacing (padSm model.screenSize.width)
                 , Font.alignLeft
-                , Font.size (fontMd model)
-                , Font.color (foreground model)
+                , Font.size (fontMd model.screenSize.width)
+                , Font.color (Colors.foreground model.darkMode)
                 , Font.family fontSecondary
                 , Font.light
                 ]
@@ -960,8 +963,8 @@ infoContent model =
         moreInfoLink : Element Msg
         moreInfoLink =
             newTabLink
-                [ Font.size (fontLg model)
-                , Font.color (accentSecondary model)
+                [ Font.size (fontLg model.screenSize.width)
+                , Font.color (Colors.accentSecondary model.darkMode)
                 , Font.family fontSecondary
                 , Font.light
                 ]
@@ -970,8 +973,8 @@ infoContent model =
                 }
     in
     column
-        [ paddingEach { edges | top = padXl model }
-        , spacing (padXl model)
+        [ paddingEach { edges | top = padXl model.screenSize.width }
+        , spacing (padXl model.screenSize.width)
         ]
         [ paragraphWithStyle "A one repetition maximum (one rep max or 1RM) in weight training is the maximum amount of weight that a person can possibly lift for one repetition. It can be used for determining an individuals maximum strength and is the method for determining the winner in events such as powerlifting and weightlifting competitions. A one repetition maximum can also be used as an upper limit, in order to determine the desired load for an exercise (as a percentage of the 1RM)."
         , paragraphWithStyle "The 1RM can either be calculated directly using maximal testing or indirectly using submaximal estimation. The submaximal estimation method is preferred as it is safer, quicker, and less unnerving for inexperienced exercisers, however, it may underestimate the actual 1RM. One rep maximum calculators are used to predict a one rep maximum lift. The degree of accuracy can vary largely depending on the weight training experience and muscular composition of the athlete. Also, most one rep maximum calculators are designed for seasoned strength trainers, and those with little experience may find their actual one rep maximum is much lower because their nervous system cannot handle the stress of a high weight. This test should be performed with a spotter for reasons of safety."
@@ -986,14 +989,14 @@ developerLinks model =
         textStyle : List (Attribute Msg)
         textStyle =
             [ Font.center
-            , Font.size (fontMd model)
-            , Font.color (foreground model)
+            , Font.size (fontMd model.screenSize.width)
+            , Font.color (Colors.foreground model.darkMode)
             , Font.family fontSecondary
             ]
 
         linkStyle : List (Attribute Msg)
         linkStyle =
-            [ Font.color (accentSecondary model)
+            [ Font.color (Colors.accentSecondary model.darkMode)
             , Font.bold
             ]
 
@@ -1015,7 +1018,7 @@ developerLinks model =
     in
     column
         [ centerX
-        , spacing <| padMd model
+        , spacing <| padMd model.screenSize.width
         ]
         [ paragraph
             textStyle
@@ -1048,7 +1051,7 @@ affiliateImageLinks model =
     in
     row
         [ centerX
-        , paddingEach { edges | top = padLg model }
+        , paddingEach { edges | top = padLg model.screenSize.width }
         ]
     <|
         List.map imageLink
@@ -1065,12 +1068,12 @@ panel children model =
             { offset = ( 0, 4 )
             , size = 0
             , blur = 6
-            , color = shadowColor model
+            , color = Colors.shadowColor model.darkMode
             }
     in
     column
-        [ padding (padXl model)
-        , Background.color (washLight model)
+        [ padding (padXl model.screenSize.width)
+        , Background.color (Colors.washLight model.darkMode)
         , Border.rounded 10
         , Border.shadow shadow
         ]
@@ -1106,252 +1109,6 @@ classifyDevice width _ =
 
     else
         Desktop
-
-
-toSvgColor : Color -> String
-toSvgColor color =
-    let
-        to255 accessor =
-            toRgb color
-                |> accessor
-                |> (*) 255
-                |> String.fromFloat
-    in
-    String.concat
-        [ "rgb("
-        , to255 .red
-        , ","
-        , to255 .green
-        , ","
-        , to255 .blue
-        , ")"
-        ]
-
-
-background : Model -> Color
-background model =
-    if model.darkMode then
-        black
-
-    else
-        white
-
-
-foreground : Model -> Color
-foreground model =
-    if model.darkMode then
-        white
-
-    else
-        black
-
-
-washLight : Model -> Color
-washLight model =
-    if model.darkMode then
-        slateGrey
-
-    else
-        lightGrey
-
-
-washHeavy : Model -> Color
-washHeavy model =
-    if model.darkMode then
-        lightGrey
-
-    else
-        darkGrey
-
-
-accentPrimary : Model -> Color
-accentPrimary model =
-    if model.darkMode then
-        blue
-
-    else
-        darkBlue
-
-
-accentSecondary : Model -> Color
-accentSecondary model =
-    if model.darkMode then
-        lightBlue
-
-    else
-        darkBlue
-
-
-shadowColor : Model -> Color
-shadowColor model =
-    if model.darkMode then
-        black
-
-    else
-        blackTranslucent
-
-
-white : Color
-white =
-    rgb255 255 255 255
-
-
-lightBlue : Color
-lightBlue =
-    rgb255 0 98 255
-
-
-blue : Color
-blue =
-    rgb255 53 69 177
-
-
-darkBlue : Color
-darkBlue =
-    rgb255 48 63 159
-
-
-gold : Color
-gold =
-    rgb255 153 130 0
-
-
-lightGrey : Color
-lightGrey =
-    rgb255 235 235 235
-
-
-darkGrey : Color
-darkGrey =
-    rgb255 179 179 179
-
-
-slateGrey : Color
-slateGrey =
-    rgb255 41 41 41
-
-
-black : Color
-black =
-    rgb255 26 26 26
-
-
-blackTranslucent : Color
-blackTranslucent =
-    rgba255 0 0 0 0.15
-
-
-pad4Xl : Model -> Int
-pad4Xl =
-    scalePad << pad3Xl
-
-
-pad3Xl : Model -> Int
-pad3Xl =
-    scalePad << pad2Xl
-
-
-pad2Xl : Model -> Int
-pad2Xl =
-    scalePad << padXl
-
-
-padXl : Model -> Int
-padXl =
-    scalePad << padLg
-
-
-padLg : Model -> Int
-padLg =
-    scalePad << padMd
-
-
-padMd : Model -> Int
-padMd =
-    scalePad << padSm
-
-
-padSm : Model -> Int
-padSm =
-    scaleFromWidth 0.022
-
-
-scalePad : Int -> Int
-scalePad =
-    scale 1.5
-
-
-edges : { left : Int, right : Int, top : Int, bottom : Int }
-edges =
-    { left = 0, right = 0, top = 0, bottom = 0 }
-
-
-font4Xl : Model -> Int
-font4Xl =
-    scaleFont << scaleFont << font2xl
-
-
-font2xl : Model -> Int
-font2xl =
-    scaleFont << fontXl
-
-
-fontXl : Model -> Int
-fontXl =
-    scaleFont << fontLg
-
-
-fontLg : Model -> Int
-fontLg =
-    scaleFont << fontMd
-
-
-fontMd : Model -> Int
-fontMd =
-    scaleFont << fontSm
-
-
-fontSm : Model -> Int
-fontSm model =
-    scaleFromWidth 0.03 model
-
-
-scaleFont : Int -> Int
-scaleFont =
-    scale 1.33
-
-
-scaleFromWidth : Float -> Model -> Int
-scaleFromWidth factor model =
-    scale factor <|
-        min maxScreenWidth model.screenSize.width
-
-
-scale : Float -> Int -> Int
-scale factor number =
-    number
-        |> toFloat
-        |> (*) factor
-        |> round
-
-
-maxScreenWidth : Int
-maxScreenWidth =
-    450
-
-
-fontPrimary : List Font.Font
-fontPrimary =
-    [ Font.typeface "Barlow Semi Condensed"
-    , Font.sansSerif
-    ]
-
-
-fontSecondary : List Font.Font
-fontSecondary =
-    [ Font.typeface "Fira Sans"
-    , Font.sansSerif
-    ]
 
 
 
