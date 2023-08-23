@@ -56,7 +56,7 @@ type alias Model =
     { screenSize : ScreenSize
     , device : Device
     , darkMode : Bool
-    , weight : Float
+    , weight : Int
     , reps : Int
     , unit : Unit
     , oneRepMax : Int
@@ -162,9 +162,9 @@ toggleDarkMode model =
 updateWeight : String -> Model -> Model
 updateWeight numberString model =
     let
-        newWeight : Float
+        newWeight : Int
         newWeight =
-            numberStringToFloat numberString model.weight
+            numberStringToInt numberString model.weight
     in
     if newWeight < 0 then
         model
@@ -198,20 +198,37 @@ numberStringToInt numberString default =
             |> Maybe.withDefault default
 
 
-numberStringToFloat : String -> Float -> Float
-numberStringToFloat numberString default =
-    if String.isEmpty numberString then
-        0
-
-    else
-        numberString
-            |> String.toFloat
-            |> Maybe.withDefault default
-
-
 changeUnit : Unit -> Model -> Model
 changeUnit unit model =
-    { model | unit = unit }
+    let
+        convertUnit : Int -> Int
+        convertUnit =
+            case unit of
+                Lb ->
+                    kgToLbs
+
+                Kg ->
+                    lbsToKg
+    in
+    if unit == model.unit then
+        model
+
+    else
+        { model
+            | oneRepMax = convertUnit model.oneRepMax
+            , weight = convertUnit model.weight
+            , unit = unit
+        }
+
+
+lbsToKg : Int -> Int
+lbsToKg weight =
+    round (toFloat weight * 0.45359237)
+
+
+kgToLbs : Int -> Int
+kgToLbs weight =
+    round (toFloat weight * 2.2046226218)
 
 
 updateCalculate : CalculateMsg -> Model -> Model
@@ -252,12 +269,13 @@ calculate model =
         oneRepMax : Int
         oneRepMax =
             if model.reps == 1 then
-                round model.weight
+                model.weight
 
             else
-                model.weight
-                    * (1 + toFloat model.reps / 30)
-                    |> round
+                round
+                    (toFloat model.weight
+                        * (1 + toFloat model.reps / 30)
+                    )
     in
     { model | oneRepMax = oneRepMax }
 
@@ -523,7 +541,7 @@ weightInput model =
                 ""
 
             else
-                String.fromFloat model.weight
+                String.fromInt model.weight
     in
     Input.text
         (numberInputStyle model)
